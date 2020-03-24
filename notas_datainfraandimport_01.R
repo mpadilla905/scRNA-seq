@@ -392,3 +392,40 @@ pryr::object_size(lun.sce)
 ## ----'reproducibility', cache = TRUE, dependson=knitr::all_labels()--------------------------------------------------
 options(width = 120)
 sessioninfo::session_info()
+
+## SCE OBJECT EXERCISES
+
+## which function defines the sce class?
+## SingleCellExperiment::SingleCellExperiment
+
+## what are the minimum type of tables an sce object contains?
+## infoGenes : rowData()
+## number of reads overlapping each gene for each cell: assays
+## info about cells : colData()
+## optionally: PCA, TSNE, alternative experiments
+## random info (metadata)
+
+## where are the colnames(sce) used?
+head(colnames(sce))
+## column names of the assays + rownames of the colData, nombres de las celulas
+
+## Similarly, where are the rownames(sce) used?
+## head(rownames(sce))
+## head(rownames(rowData(sce)))
+## nombres de los renglones de la matriz azul, o de la matriz verde
+
+
+## How many principal components did we compute?
+## dim(reducedDim(sce, "PCA"))
+## dim(sce)
+## head(reducedDim(sce, "PCA")) 50 PCs
+
+## Which three chromosomes have the highest mean gene expression?
+rowData(sce)
+sort(with(rowData(sce), tapply(mean, chromosome, base::mean), decreasing = TRUE ))
+sort(tapply(rowData(sce)$mean, roData(sce)$chromosome, base::mean), decreasing = TRUE)
+
+
+
+
+
