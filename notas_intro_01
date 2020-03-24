@@ -61,4 +61,6 @@ scater::plotUMAP(sce, colour_by = "clusters")
 ## ----'quick_intro_05', eval = FALSE----------------------------------------------------------------------------------
 ## # Interactive visualization
 p <- scater::plotUMAP(sce, colour_by = "clusters")
+
 plotly::ggplotly(p)
+## se hace interactivo, pero pesa mucho el doc
