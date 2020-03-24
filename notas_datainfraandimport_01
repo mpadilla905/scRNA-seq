@@ -3,9 +3,13 @@
 ## ----all_code, cache=TRUE--------------------------------------------------------------------------------------------
 library('scRNAseq')
 sce.416b <- LunSpikeInData(which = "416b")
+## datos de un exp
+
 
 # Load the SingleCellExperiment package
 library('SingleCellExperiment')
+
+
 # Extract the count matrix from the 416b dataset
 counts.416b <- counts(sce.416b)
 # Construct a new SCE from the counts matrix
@@ -14,23 +18,31 @@ sce <- SingleCellExperiment(assays = list(counts = counts.416b))
 # Inspect the object we just created
 sce
 
-## How big is it?
+## How big is it? 40 MB
 pryr::object_size(sce)
+
 
 # Access the counts matrix from the assays slot
 # WARNING: This will flood RStudio with output!
 
 # 1. The general method
 assay(sce, "counts")[1:6, 1:3]
+## nos va crear la matriz
+
 # 2. The special method for the assay named "counts"
 counts(sce)[1:6, 1:3]
 
+
+## vaos a normalizar las cuentas y crea la tabla correspondiente, otra tabla azul
 sce <- scater::logNormCounts(sce)
 # Inspect the object we just updated
 sce
 
-## How big is it?
-pryr::object_size(sce)
+## How big is it? ahora es de 112MB
+pryr::object_size(sce) ya estaba y agregando la tabla nueva
+## la tabla es la que dice logcounts en assays
+
+## sce se reescribio pero tomando la info que
 
 # 1. The general method
 assay(sce, "logcounts")[1:6, 1:3]
@@ -40,14 +52,20 @@ logcounts(sce)[1:6, 1:3]
 # assign a new entry to assays slot
 assay(sce, "counts_100") <- assay(sce, "counts") + 100
 # List the assays in the object
-assays(sce)
-assayNames(sce)
+assays(sce) ### diferentes matrices en nuestro obj
+assayNames(sce) # esto nada mas nos ensena el nombre de nuestras matrices de cuentas
 
 ## How big is it?
 pryr::object_size(sce)
 
+# ya tenemos las cuentas, necesitamos ahora la info de las celulas, del experiment
+## para eso tenemos la tabla de Cell Metada y ahora cada col la llamamos con colData
+
 # Extract the sample metadata from the 416b dataset
 colData.416b <- colData(sce.416b)
+## colData es data.frame de Bioconductor pero mas flexible
+## aqui tenemos la info de fenotipo
+
 # Add some of the sample metadata to our SCE
 colData(sce) <- colData.416b[, c("phenotype", "block")]
 # Inspect the object we just updated
@@ -59,6 +77,8 @@ table(sce$block)
 
 # Example of function that adds extra fields to colData
 sce <- scater::addPerCellQC(sce.416b)
+## tenemos la info de antes mas otras 12 cols 
+
 # Access the sample metadata from our updated SCE
 colData(sce)
 
@@ -77,13 +97,19 @@ pryr::object_size(sce)
 # E.g., subset data to just wild type cells
 # Remember, cells are columns of the SCE
 sce[, sce$phenotype == "wild type phenotype"]
+x = sce$phenotype == "wild type phenotype"
+## x es un vector logico tam ncol(sce)
+
 
 # Access the feature metadata from our SCE
 # It's currently empty!
 rowData(sce)
+## esto es la primera tablita, de metadata del gen
 
 # Example of function that adds extra fields to rowData
 sce <- scater::addPerFeatureQC(sce)
+## nos va a adar info sobre cada gen
+
 # Access the feature metadata from our updated SCE
 rowData(sce)
 
@@ -99,10 +125,16 @@ query(ah, c("Mus musculus", "Ensembl", "v97"))
 
 # Annotate each gene with its chromosome location
 ensdb <- ah[["AH73905"]]
+## el doble corchete es igual a
+## [[id]] descargar datos y cargarlos en la sesion de R
+## download_data = function(ah, id) { access_data( sh, id) }
+
 chromosome <- mapIds(ensdb,
     keys = rownames(sce),
     keytype = "GENEID",
     column = "SEQNAME")
+ ## de ensdb tomamos ...
+    
 rowData(sce)$chromosome <- chromosome
 
 # Access the feature metadata from our updated SCE
