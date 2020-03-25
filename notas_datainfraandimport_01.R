@@ -213,6 +213,7 @@ pryr::object_size(sce.subset)
 # Extract existing size factors (these were added
 # when we ran scater::logNormCounts(sce))
 head(sizeFactors(sce))
+## agrgaos info del numero de genes 
 
 # 'Automatically' replace size factors
 sce <- scran::computeSumFactors(sce)
@@ -224,6 +225,7 @@ head(sizeFactors(sce))
 
 
 ## ----ercc_exercise, cache = TRUE, dependson='all_code'---------------------------------------------------------------
+## Leer tabla https://tools.thermofisher.com/content/sfs/manuals/cms_095046.txt con read.delim()
 ## Read the data from the web
 ercc_info <-
     read.delim(
@@ -233,12 +235,31 @@ ercc_info <-
         check.names = FALSE
     )
 
+## Explorando el objecto de altExp(sce, 'ERCC')
+dim(altExp(sce, 'ERCC')) # 92 genes x celulas
+dim(ercc_info) ## info para cada gene (92)
+
+
+assayNames(altExp(sce, 'ERCC'))
+dim(assay(altExp(sce, 'ERCC'), 'counts'))
+
+
+## Usar los ERCC ID para alinear esta tabla con el objeto sce (ERCC alt experiment)
+
 ## Match the ERCC data
 m <- match(rownames(altExp(sce, "ERCC")), rownames(ercc_info))
 ercc_info <- ercc_info[m, ]
 
 ## Normalize the ERCC counts
-altExp(sce, "ERCC") <- scater::logNormCounts(altExp(sce, "ERCC"))
+#altExp(sce, "ERCC") <- scater::logNormCounts(altExp(sce, "ERCC"))
+## mejor no xd
+
+
+## Usar plot() para graficar concentration in Mix 1 (attomoles/ul) vs las cuentas de ERCC de nuestro sce(en alt exp)
+i <- 1
+assay(altExp(sce, 'ERCC'), 'counts')[, i]
+plot(ercc_info[,"concentration in Mix 1 (attomoles/ul)"] ~ counts(altExp(sce, "ERCC"))[,i] )
+
 
 
 ## ----ercc_solution_plots, cache = TRUE, dependson='ercc_exercise'----------------------------------------------------
@@ -258,6 +279,31 @@ for (i in seq_len(2)) {
     )
     abline(0, 1, lty = 2, col = 'red')
 }
+
+
+## de hacer un pdf el chiste es que puedes explorar todas las celulas y ver si hay un problema en especifico
+## ver patrones de errores
+pdf('ERCC_example.pdf')
+for (i in seq_len(ncol(sce))) {
+    message(paste(Sys.time(), 'plotting cell', i))
+    plot(
+        log2(10 * ercc_info[, "concentration in Mix 1 (attomoles/ul)"] + 1) ~
+            log2(counts(altExp(sce, "ERCC"))[, i] +
+                    1),
+        xlab = "log norm counts",
+        ylab = "Mix 1: log2(10 * Concentration + 1)",
+        main = colnames(altExp(sce, "ERCC"))[i],
+        xlim = c(min(logcounts(
+            altExp(sce, "ERCC")
+        )), max(logcounts(
+            altExp(sce, "ERCC")
+        )))
+    )
+    abline(0, 1, lty = 2, col = 'red')
+}
+dev.off()
+## en el pdf vamos a tener, una grafica por celula,
+## de la concentrancion de cada ERCC gene contra las lecturas de cada ERCC gen
 
 
 ## ----all_code_part2, cache=TRUE--------------------------------------------------------------------------------------
