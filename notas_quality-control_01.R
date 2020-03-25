@@ -25,10 +25,17 @@ is.mito <- which(location == "MT")
 library('scater')
 sce.416b <- addPerCellQC(sce.416b,
     subsets = list(Mito = is.mito))
-
+## el resultado de esta funcion es un obj de sce
+## estamos crenado nuevas 
+## es por cada celula
+## la info viene en colData
+## detected -> genes con expr mayor a ceropara nuestro obj sce.416b y los alt exp
+## percellqc hace el analisis 
+#colData()
 
 ## ----qc_metrics, cache=TRUE, dependson='all_code'--------------------------------------------------------------------
 plotColData(sce.416b, x = "block", y = "detected")
+## estas vars deben estar definidad es en colnames(colData(sce.416b))
 
 plotColData(sce.416b, x = "block", y = "detected") +
     scale_y_log10()
@@ -43,10 +50,11 @@ plotColData(sce.416b,
 
 ## ----all_code_part2, cache = TRUE, dependson='all_code'--------------------------------------------------------------
 # Example thresholds
-qc.lib <- sce.416b$sum < 100000
+## definie nuestros thresholds
+qc.lib <- sce.416b$sum < 100000 ## lecturos
 qc.nexprs <- sce.416b$detected < 5000
-qc.spike <- sce.416b$altexps_ERCC_percent > 10
-qc.mito <- sce.416b$subsets_Mito_percent > 10
+qc.spike <- sce.416b$altexps_ERCC_percent > 10 # pocentaje de expr ercc
+qc.mito <- sce.416b$subsets_Mito_percent > 10 ## mas del 10percent en mito
 discard <- qc.lib | qc.nexprs | qc.spike | qc.mito
 
 # Summarize the number of cells removed for each reason
@@ -58,7 +66,21 @@ DataFrame(
     Total = sum(discard)
 )
 
+## cuantas celulas no pasan los thresholds?
+## DataFrame with 1 row and 5 columns
+##    LibSize    NExprs SpikeProp  MitoProp     Total
+##  <integer> <integer> <integer> <integer> <integer>
+##   1         3         0        19        14        33
+## 14 no pasaron el threshold de mito
+
+args(isOutlier)
+plotColData(sce.416b, x = "block", y = "sum")
+plotColData(sce.416b, x = "block", y = "sum") + scale_y_log10()
+
+## scater::isOutliers has a set of assumes
+
 qc.lib2 <- isOutlier(sce.416b$sum, log = TRUE, type = "lower")
+## en nuestro caso consideramos que solo las bajas no son malas
 qc.nexprs2 <- isOutlier(sce.416b$detected, log = TRUE,
     type = "lower")
 qc.spike2 <- isOutlier(sce.416b$altexps_ERCC_percent,
