@@ -56,6 +56,8 @@ qc.nexprs <- sce.416b$detected < 5000
 qc.spike <- sce.416b$altexps_ERCC_percent > 10 # pocentaje de expr ercc
 qc.mito <- sce.416b$subsets_Mito_percent > 10 ## mas del 10percent en mito
 discard <- qc.lib | qc.nexprs | qc.spike | qc.mito
+discard <- qc.nexprs | qc.spike | qc.mito
+discard <- c.nexprs | qc.spike | qc.mito
 
 # Summarize the number of cells removed for each reason
 DataFrame(
@@ -72,6 +74,7 @@ DataFrame(
 ##  <integer> <integer> <integer> <integer> <integer>
 ##   1         3         0        19        14        33
 ## 14 no pasaron el threshold de mito
+## en total deberiamos eliminar 33...
 
 args(isOutlier)
 plotColData(sce.416b, x = "block", y = "sum")
@@ -79,6 +82,7 @@ plotColData(sce.416b, x = "block", y = "sum") + scale_y_log10()
 
 ## scater::isOutliers has a set of assumes
 
+## todos estos son vectores logicos
 qc.lib2 <- isOutlier(sce.416b$sum, log = TRUE, type = "lower")
 ## en nuestro caso consideramos que solo las bajas no son malas
 qc.nexprs2 <- isOutlier(sce.416b$detected, log = TRUE,
@@ -110,6 +114,39 @@ plotColData(sce.416b,
     facet_wrap( ~ phenotype)
 
 batch <- paste0(sce.416b$phenotype, "-", sce.416b$block)
+## mexclamos fenotipo con el bloque
+table(batch)
+## tenemos 4 
+
+## QC questions
+
+## Was qc.lib necessary for creating discord?
+## yes, because in that way we see if a cell was broken 
+## yes, porque descarto 2
+
+## > table(qc.spike,qc.mito,qc.lib)
+## , , qc.lib = FALSE
+##
+##       qc.mito
+## qc.spike FALSE TRUE
+##   FALSE   159   12
+##   TRUE     16    2
+##
+##, , qc.lib = TRUE
+##
+##        qc.mito
+## qc.spike FALSE TRUE
+##   FALSE     2    0
+##   TRUE      1    0
+
+
+## Which filter discarded more cells? discard or discard2?
+## discard -33, discard2 -6
+
+## By considering the sample batch, did we discard more cells using automatic threshold detection?
+
+
+
 qc.lib3 <- isOutlier(sce.416b$sum,
     log = TRUE,
     type = "lower",
