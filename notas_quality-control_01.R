@@ -180,18 +180,34 @@ DataFrame(
 ## ----use_case, cache=TRUE, dependson= c('all_code', 'all_code_part2')------------------------------------------------
 sce.grun <- GrunPancreasData()
 sce.grun <- addPerCellQC(sce.grun)
+## addpercel agrega un monton de info
 
+
+## reminder: no nos gusta tener alto porcentaje de ERCC aka spike-ins
 plotColData(sce.grun, x = "donor", y = "altexps_ERCC_percent")
+## las distribuciones de porcentaje de spike-ins que alinearon nos es igual entre donadores
+## D10 y D3 presentan muchisimas celulas con alto porcentaje
+## D7 todavia pasa de panzaso (-Leo)
+
+hist(sce.grun$altexp_ERCC_percent[sce.grun$donor == 2])
+## a ojo, como el 40% de celulas salieron mal
+## la distrib no es simetrica, que es algo que habiamos asumido en el modelo
 
 discard.ercc <- isOutlier(sce.grun$altexps_ERCC_percent,
     type = "higher",
     batch = sce.grun$donor)
+## funciona bien pero no para las celulas con distribucion fea d10 y d3
+
 discard.ercc2 <- isOutlier(
     sce.grun$altexps_ERCC_percent,
     type = "higher",
     batch = sce.grun$donor,
     subset = sce.grun$donor %in% c("D17", "D2", "D7")
 )
+## esta vez nada mas usamos la info de d17, d2 y d2 para poner los limites de lo que aceptas
+##      elegimos eso utlimo a ojo, viendo su plot (el de plotColData)
+## en esta ocasion si descarto las celulas chafas en d10 y d3
+## %in% = 
 
 plotColData(
     sce.grun,
@@ -250,6 +266,7 @@ fname <- file.path(tempdir(), "pbmc4k/raw_gene_bc_matrices/GRCh38")
 sce.pbmc <- read10xCounts(fname, col.names = TRUE)
 
 bcrank <- barcodeRanks(counts(sce.pbmc))
+## bar code rank (bcrank)
 
 # Only showing unique points for plotting speed.
 uniq <- !duplicated(bcrank$rank)
@@ -261,6 +278,14 @@ plot(
     ylab = "Total UMI count",
     cex.lab = 1.2
 )
+
+## nad mas se estan grafi los ranks unicos
+## y-- numero total de UMI Unique Molecular Identifiers
+## x -- no de ranksomics
+## asi se suelen ver las graficas de 10x gen
+
+## UMI generalmnete es como el no unico de genes
+
 abline(h = metadata(bcrank)$inflection,
     col = "darkgreen",
     lty = 2)
@@ -273,11 +298,14 @@ legend(
     col = c("darkgreen", "dodgerblue"),
     lty = 2,
     cex = 1.2
-)
-
+) 
+## el metodo estadistico va a querer determinar entre el intervalo de las dos lineas
+##      que droplets tienen celulas y cuales no
 
 set.seed(100)
 e.out <- emptyDrops(counts(sce.pbmc))
+## empty Drops tinee el metodo estadistico 
+##          que se utiliza para decidir si un droplet esta vacio o no
 
 # See ?emptyDrops for an explanation of why there are NA # values.
 summary(e.out$FDR <= 0.001)
