@@ -246,7 +246,7 @@ plotColData(
 ) +
     facet_grid(block ~ phenotype)
 
-
+#######################################################################################################################
 ## ----use_case_pbmc, cache=TRUE, dependson='all_code'-----------------------------------------------------------------
 library('BiocFileCache')
 bfc <- BiocFileCache()
@@ -279,7 +279,7 @@ plot(
     cex.lab = 1.2
 )
 
-## nad mas se estan grafi los ranks unicos
+## nad mas se estan graficando los ranks unicos
 ## y-- numero total de UMI Unique Molecular Identifiers
 ## x -- no de ranksomics
 ## asi se suelen ver las graficas de 10x gen
@@ -306,14 +306,23 @@ set.seed(100)
 e.out <- emptyDrops(counts(sce.pbmc))
 ## empty Drops tinee el metodo estadistico 
 ##          que se utiliza para decidir si un droplet esta vacio o no
+## emptyDrops() assumes that barcodes with less than lower total UMI counts are empty droplets.
+## el perfil de expr de cada celula es significativamnte diferente del ambient RNA pool
+
+head(e.out)
+dim(e.out)
 
 # See ?emptyDrops for an explanation of why there are NA # values.
 summary(e.out$FDR <= 0.001)
 
-set.seed(100)
+set.seed(100) ## resultados reproducibles! como el p-val etc
 limit <- 100
 all.out <-
-    emptyDrops(counts(sce.pbmc), lower = limit, test.ambient = TRUE)
+    emptyDrops(counts(sce.pbmc), lower = limit, test.ambient = TRUE) 
+## todos los droplets que tengan el limit estamos 100% seguros de que son basura
+## el limit es fijado como a ojo pero 100 es el default
+## con test.ambient = TRUE le dijimos que si checara los que estaban debajo del limit
+
 # Ideally, this histogram should look close to uniform.
 # Large peaks near zero indicate that barcodes with total
 # counts below 'lower' are not ambient in origin.
@@ -322,6 +331,7 @@ hist(all.out$PValue[all.out$Total <= limit &
     xlab = "P-value",
     main = "",
     col = "grey80")
+## solo de los droplets que pasaron el limit
 
 sce.pbmc <- sce.pbmc[, which(e.out$FDR <= 0.001)]
 
@@ -337,6 +347,27 @@ plot(
     ylab = "Mitochondrial %"
 )
 abline(h = attr(discard.mito, "thresholds")["higher"], col = "red")
+
+## EXERCISES DROPLETS
+
+## Why does emptyDrops() return NA values?
+## porque se excluyen calculos de los droplets menor al threshold "lower" y en su lugar se asignan valores
+## na
+## pero se mantienen las dimensiones del objeto (barcodes x tipos de calculo)
+
+## Are the p-values the same for e.out and all.out?
+identical(all.out[,3], e.out[,3])
+## FALSE
+## note: la col 3 es la de los P-values
+
+## What if you subset to the non-NA entries?
+identical(all.out[which(!is.na(e.out$PValue)),3], e.out[which(!is.na(e.out$PValue)),3])
+## TRUE
+## NOta: si no hubiesemos utilizado set.seed() no habria dado TRUE
+
+## tip: usar 
+library(colorout)
+stop("hola") ## ahora nuestros errores van a salir en rojo en la terminal
 
 
 ## ----marking, cache=TRUE, dependson='use_case'-----------------------------------------------------------------------
