@@ -1,5 +1,9 @@
 ## taken from https://github.com/lcolladotor/osca_LIIGH_UNAM_2020/blob/master/03-quality-control.R#L57-L320
 
+## tip: usar 
+library(colorout)
+stop("hola") ## ahora nuestros errores van a salir en rojo en la terminal
+
 ## ----all_code, cache=TRUE--------------------------------------------------------------------------------------------
 ## Data
 library('scRNAseq')
@@ -118,6 +122,7 @@ batch <- paste0(sce.416b$phenotype, "-", sce.416b$block)
 table(batch)
 ## tenemos 4 
 
+###############################################################################
 ## QC questions
 
 ## Was qc.lib necessary for creating discord?
@@ -139,12 +144,12 @@ table(batch)
 ##   FALSE     2    0
 ##   TRUE      1    0
 
-
 ## Which filter discarded more cells? discard or discard2?
 ## discard -33, discard2 -6
 
 ## By considering the sample batch, did we discard more cells using automatic threshold detection?
 
+###############################################################################
 
 
 qc.lib3 <- isOutlier(sce.416b$sum,
@@ -348,6 +353,7 @@ plot(
 )
 abline(h = attr(discard.mito, "thresholds")["higher"], col = "red")
 
+###############################################################################
 ## EXERCISES DROPLETS
 
 ## Why does emptyDrops() return NA values?
@@ -364,10 +370,7 @@ identical(all.out[,3], e.out[,3])
 identical(all.out[which(!is.na(e.out$PValue)),3], e.out[which(!is.na(e.out$PValue)),3])
 ## TRUE
 ## NOta: si no hubiesemos utilizado set.seed() no habria dado TRUE
-
-## tip: usar 
-library(colorout)
-stop("hola") ## ahora nuestros errores van a salir en rojo en la terminal
+###############################################################################
 
 
 ## ----marking, cache=TRUE, dependson='use_case'-----------------------------------------------------------------------
