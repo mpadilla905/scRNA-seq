@@ -1,3 +1,5 @@
+## copied source code from: https://github.com/lcolladotor/osca_LIIGH_UNAM_2020/blob/master/04-normalization.R#L57-L140
+
 ## ----all_code, cache=TRUE--------------------------------------------------------------------------------------------
 library('scRNAseq')
 sce.zeisel <- ZeiselBrainData(ensembl = TRUE)
@@ -51,7 +53,7 @@ plot(
 )
 
 ##########################################################################
-## EXERCISE 
+## EXERCISE 1
 
 ## Are ls.zeisel and lib.sf.zeisel identical?
 m = match(names(lib.sf.zeisel),names(ls.zeisel))
@@ -76,11 +78,19 @@ table(lib.sf.zeisel/ls.zeisel)
 
 ## Compute lib.sf.zeisel manually
 
-## Library size = sum of counts across all genes for each cell
-## The "library size factor" for each cell is then scaled so that 
-##       the average size factor across all cells is 1
+##       Library size = sum of counts across all genes for each cell
+##       The "library size factor" for each cell is then scaled so that 
+##             the average size factor across all cells is 1
 
+## First compute the sums
+zeisel_sums <- colSums(counts(sce.zeisel))
+identical(zeisel_sums, ls.zeisel)
+## TRUE
 
+## Next, make them have unity mean
+zeisel_size_factors <- zeisel_sums/mean(zeisel_sums)
+identical(zeisel_size_factors, lib.sf.zeisel)
+## TRUE
 
 ##########################################################################
 
