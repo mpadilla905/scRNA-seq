@@ -82,15 +82,7 @@ table(lib.sf.zeisel/ls.zeisel)
 ##       The "library size factor" for each cell is then scaled so that 
 ##             the average size factor across all cells is 1
 
-## First compute the sums
-zeisel_sums <- colSums(counts(sce.zeisel))
-identical(zeisel_sums, ls.zeisel)
-## TRUE
-
-## Next, make them have unity mean
-zeisel_size_factors <- zeisel_sums/mean(zeisel_sums)
-identical(zeisel_size_factors, lib.sf.zeisel)
-## TRUE
+## answer below
 
 ##########################################################################
 
@@ -110,7 +102,7 @@ identical(zeisel_size_factors, lib.sf.zeisel)
 library('scran')
 # Pre-clustering
 set.seed(100)
-clust.zeisel <- quickCluster(sce.zeisel)
+clust.zeisel <- quickCluster(sce.zeisel) ## opcional pero recomendado
 # Compute deconvolution size factors
 deconv.sf.zeisel <-
     calculateSumFactors(sce.zeisel, clusters = clust.zeisel, min.mean = 0.1)
@@ -127,6 +119,34 @@ plot(
     ylab = "Size factor"
 )
 
+###########################################################################
+
+## How many quick clusters did we get?
+## How many cells per quick cluster did we get?
+table(clust.zeisel)
+
+## min.size: An integer scalar specifying the minimum size of each cluster.
+
+## How many quick clusters will we get if we set the minimum size to 200? Use 100 as the seed.
+set.seed(100)
+clust.zeisel2 <- quickCluster(sce.zeisel, min.size=200) 
+# Compute deconvolution size factors
+deconv.sf.zeisel2 <- calculateSumFactors(sce.zeisel, clusters = clust.zeisel, min.mean = 0.1)
+table(deconv.sf.zeisel)
+
+dim(table(clust.zeisel2))
+# 10
+
+## How many lines do you see?
+
+## quickCLuster:
+##      Cluster similar cells based on their expression profiles, using
+##          either log-expression values or 
+## calculateSumFactors: 
+##      Scaling normalization of single-cell RNA-seq data by deconvolving 
+##          size factors from cell pools.
+
+###########################################################################
 
 ## ----all_code4, cache=TRUE, dependson='all_code3'--------------------------------------------------------------------
 # Library size factors vs. convolution size factors
@@ -142,6 +162,16 @@ plot(
     col = as.integer(factor(sce.zeisel$level1class))
 )
 abline(a = 0, b = 1, col = "red")
+
+sce.zeisel = logNormCounts(sce.zeisel)
+## divide las cuentas de cada feature (gen) por size factorlas library 
+##      counts/ lib.sz/factor
+## luego a;ade log +1 para queno se vaya a Inf
+##      log( counts/ lib.sz/factor ) 
+## a los valores que quedan se les llama logcounts o log normalized count
+## se convierten a log para distinguir bien las diferencias
+assayNames(sce.zeisel)
+## [1] "counts"    "logcounts"
 
 
 ## ----'reproducibility', cache = TRUE, dependson=knitr::all_labels()--------------------------------------------------
