@@ -17,10 +17,23 @@ sce <- SingleCellExperiment(assays = list(counts = counts.416b))
 
 # Inspect the object we just created
 sce
+# class: SingleCellExperiment
+# dim: 46604 192
+# metadata(2): favourite_genes analyst
+# assays(2): counts logcounts
+# rownames(46604): ENSMUSG00000102693 ENSMUSG00000064842 ... ENSMUSG00000095742 CBFB-MYH11-mcherry
+# rowData names(4): Length mean detected chromosome
+# colnames(192): SLX-9555.N701_S502.C89V9ANXX.s_1.r_1 SLX-9555.N701_S503.C89V9ANXX.s_1.r_1 ...
+# SLX-11312.N712_S508.H5H5YBBXX.s_8.r_1 SLX-11312.N712_S517.H5H5YBBXX.s_8.r_1
+# colData names(23): Source Name cell line ... total sizeFactor
+# reducedDimNames(3): PCA TSNE UMAP
+# altExpNames(2): ERCC SIRV
 
 ## How big is it? 40 MB
 pryr::object_size(sce)
 
+dim(counts.416b)
+# [1] 46604   192
 
 # Access the counts matrix from the assays slot
 # WARNING: This will flood RStudio with output!
@@ -39,7 +52,7 @@ sce <- scater::logNormCounts(sce)
 sce
 
 ## How big is it? ahora es de 112MB
-pryr::object_size(sce) ya estaba y agregando la tabla nueva
+pryr::object_size(sce) # ya estaba y agregando la tabla nueva
 ## la tabla es la que dice logcounts en assays
 
 ## sce se reescribio pero tomando la info que
@@ -63,8 +76,8 @@ pryr::object_size(sce)
 
 # Extract the sample metadata from the 416b dataset
 colData.416b <- colData(sce.416b)
-## colData es data.frame de Bioconductor pero mas flexible
-## aqui tenemos la info de fenotipo
+    ## colData es data.frame de Bioconductor pero mas flexible
+    ## aqui tenemos la info de fenotipo
 
 # Add some of the sample metadata to our SCE
 colData(sce) <- colData.416b[, c("phenotype", "block")]
@@ -77,7 +90,7 @@ table(sce$block)
 
 # Example of function that adds extra fields to colData
 sce <- scater::addPerCellQC(sce.416b)
-## tenemos la info de antes mas otras 12 cols 
+## tenemos la info de antes mas otras 12 cols
 
 # Access the sample metadata from our updated SCE
 colData(sce)
@@ -121,12 +134,14 @@ pryr::object_size(sce)
 # using AnnotationHub resources
 library('AnnotationHub')
 ah <- AnnotationHub()
+    # Annotation hub tiene un monton de datos genomicos
 query(ah, c("Mus musculus", "Ensembl", "v97"))
+    # pedimos especificamente esta info del anootation hub
 
 # Annotate each gene with its chromosome location
 ensdb <- ah[["AH73905"]]
-## el doble corchete es igual a
-## [[id]] descargar datos y cargarlos en la sesion de R
+    ## el doble corchete es igual a
+    ## [["id"]] descargar datos y cargarlos en la sesion de R
 ## download_data = function(ah, id) { access_data( sh, id) }
 
 chromosome <- mapIds(ensdb,
@@ -134,7 +149,7 @@ chromosome <- mapIds(ensdb,
     keytype = "GENEID",
     column = "SEQNAME")
  ## de ensdb tomamos ...
-    
+
 rowData(sce)$chromosome <- chromosome
 
 # Access the feature metadata from our updated SCE
@@ -187,6 +202,9 @@ reducedDims(sce)
 
 # Extract the ERCC SCE from the 416b dataset
 ercc.sce.416b <- altExp(sce.416b, "ERCC")
+    # altExp: info de experimentos alternaticos, e.g.
+    # ercc es un tipo de spike-ins, son 92 seqs para evaluar
+    # preparacion de pcr de diferentes longs
 # Inspect the ERCC SCE
 ercc.sce.416b
 
@@ -213,7 +231,7 @@ pryr::object_size(sce.subset)
 # Extract existing size factors (these were added
 # when we ran scater::logNormCounts(sce))
 head(sizeFactors(sce))
-## agrgaos info del numero de genes 
+## agrgaos info del numero de genes
 
 # 'Automatically' replace size factors
 sce <- scran::computeSumFactors(sce)
@@ -222,7 +240,6 @@ head(sizeFactors(sce))
 # 'Manually' replace size factors
 sizeFactors(sce) <- scater::librarySizeFactors(sce)
 head(sizeFactors(sce))
-
 
 ## ----ercc_exercise, cache = TRUE, dependson='all_code'---------------------------------------------------------------
 ## Leer tabla https://tools.thermofisher.com/content/sfs/manuals/cms_095046.txt con read.delim()
@@ -468,8 +485,7 @@ head(colnames(sce))
 
 ## Which three chromosomes have the highest mean gene expression?
 rowData(sce)
-sort(with(rowData(sce), tapply(mean, chromosome, base::mean), decreasing = TRUE ))
-sort(tapply(rowData(sce)$mean, roData(sce)$chromosome, base::mean), decreasing = TRUE)
+sort(with(rowData(sce), tapply(mean, chromosome, base::mean)), decreasing = TRUE )
 
 
 
