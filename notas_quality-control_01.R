@@ -1,8 +1,16 @@
 ## taken from https://github.com/lcolladotor/osca_LIIGH_UNAM_2020/blob/master/03-quality-control.R#L57-L320
 
-## tip: usar 
+## tip: usar
+install.packages("colorout")
 library(colorout)
 stop("hola") ## ahora nuestros errores van a salir en rojo en la terminal
+
+# Common QC metrics
+# sum: library size
+# detected: no de genes expresados por cell
+# altexps_ERCC_percent: porcentaje de lecturas mapeados
+#   to ERCC spike-in transcripts
+# subsets_Mito_percent: Percentage of reads mapped to mitochondrial transcripts
 
 ## ----all_code, cache=TRUE--------------------------------------------------------------------------------------------
 ## Data
@@ -29,13 +37,14 @@ is.mito <- which(location == "MT")
 library('scater')
 sce.416b <- addPerCellQC(sce.416b,
     subsets = list(Mito = is.mito))
-## el resultado de esta funcion es un obj de sce
-## estamos crenado nuevas 
-## es por cada celula
-## la info viene en colData
-## detected -> genes con expr mayor a ceropara nuestro obj sce.416b y los alt exp
-## percellqc hace el analisis 
-#colData()
+    ## el resultado de esta funcion es un obj de sce
+    ## Agrega info a colData: ERCC, SIRV, ..
+    ## detected -> genes con expr mayor a ceropara nuestro obj sce.416b
+    ## y los alt exp percellqc hace el analisis
+    #colData()
+colnames(colData(sce.416b))
+
+# que cambio en nuestro obj de sce despues de add
 
 ## ----qc_metrics, cache=TRUE, dependson='all_code'--------------------------------------------------------------------
 plotColData(sce.416b, x = "block", y = "detected")
@@ -56,12 +65,10 @@ plotColData(sce.416b,
 # Example thresholds
 ## definie nuestros thresholds
 qc.lib <- sce.416b$sum < 100000 ## lecturos
-qc.nexprs <- sce.416b$detected < 5000
+qc.nexprs <- sce.416b$detected < 5000 # num de genes expresados
 qc.spike <- sce.416b$altexps_ERCC_percent > 10 # pocentaje de expr ercc
 qc.mito <- sce.416b$subsets_Mito_percent > 10 ## mas del 10percent en mito
 discard <- qc.lib | qc.nexprs | qc.spike | qc.mito
-discard <- qc.nexprs | qc.spike | qc.mito
-discard <- c.nexprs | qc.spike | qc.mito
 
 # Summarize the number of cells removed for each reason
 DataFrame(
@@ -73,22 +80,24 @@ DataFrame(
 )
 
 ## cuantas celulas no pasan los thresholds?
-## DataFrame with 1 row and 5 columns
-##    LibSize    NExprs SpikeProp  MitoProp     Total
-##  <integer> <integer> <integer> <integer> <integer>
-##   1         3         0        19        14        33
-## 14 no pasaron el threshold de mito
-## en total deberiamos eliminar 33...
+    ## DataFrame with 1 row and 5 columns
+    ##    LibSize    NExprs SpikeProp  MitoProp     Total
+    ##  <integer> <integer> <integer> <integer> <integer>
+    ##   1         3         0        19        14        33
+    ## 14 no pasaron el threshold de mito
+    ## en total deberiamos eliminar 33...
 
 args(isOutlier)
 plotColData(sce.416b, x = "block", y = "sum")
 plotColData(sce.416b, x = "block", y = "sum") + scale_y_log10()
 
 ## scater::isOutliers has a set of assumes
+## assumes that most of the dataset consists of high-quality cells
+## MAD: median absolute deviation
 
 ## todos estos son vectores logicos
 qc.lib2 <- isOutlier(sce.416b$sum, log = TRUE, type = "lower")
-## en nuestro caso consideramos que solo las bajas no son malas
+## en nuestro caso consideramos que solo las bajas son malas
 qc.nexprs2 <- isOutlier(sce.416b$detected, log = TRUE,
     type = "lower")
 qc.spike2 <- isOutlier(sce.416b$altexps_ERCC_percent,
@@ -116,17 +125,18 @@ plotColData(sce.416b,
     other_fields = "phenotype") +
     scale_y_log10() +
     facet_wrap( ~ phenotype)
+    #
 
 batch <- paste0(sce.416b$phenotype, "-", sce.416b$block)
-## mexclamos fenotipo con el bloque
+## mezclamos fenotipo con el bloque
 table(batch)
-## tenemos 4 
+## tenemos 4 batches, con 48 celulas cada uno
 
 ###############################################################################
 ## QC questions
 
 ## Was qc.lib necessary for creating discord?
-## yes, because in that way we see if a cell was broken 
+## yes, because in that way we see if a cell was broken
 ## yes, porque descarto 2
 
 ## > table(qc.spike,qc.mito,qc.lib)
@@ -172,6 +182,15 @@ discard3 <- qc.lib3 | qc.nexprs3 | qc.spike3 | qc.mito3
 attr(qc.lib3, "thresholds")
 attr(qc.nexprs3, "thresholds")
 
+# qc.lib fue ncesario para crear discord
+table(qc.lib)
+# si, para porque qc.lib contenia el criterio del tam de libreria
+table(discard,discard2) # quito 6
+# Al considerar el grupo de cada muestra (batch),
+# ¿descartamos más células usando un valor de límite automático?
+table(discard2,discard3)
+
+
 # Summarize the number of cells removed for each reason
 DataFrame(
     LibSize = sum(qc.lib3),
@@ -212,7 +231,7 @@ discard.ercc2 <- isOutlier(
 ## esta vez nada mas usamos la info de d17, d2 y d2 para poner los limites de lo que aceptas
 ##      elegimos eso utlimo a ojo, viendo su plot (el de plotColData)
 ## en esta ocasion si descarto las celulas chafas en d10 y d3
-## %in% = 
+## %in% =
 
 plotColData(
     sce.grun,
@@ -303,13 +322,13 @@ legend(
     col = c("darkgreen", "dodgerblue"),
     lty = 2,
     cex = 1.2
-) 
+)
 ## el metodo estadistico va a querer determinar entre el intervalo de las dos lineas
 ##      que droplets tienen celulas y cuales no
 
 set.seed(100)
 e.out <- emptyDrops(counts(sce.pbmc))
-## empty Drops tinee el metodo estadistico 
+## empty Drops tinee el metodo estadistico
 ##          que se utiliza para decidir si un droplet esta vacio o no
 ## emptyDrops() assumes that barcodes with less than lower total UMI counts are empty droplets.
 ## el perfil de expr de cada celula es significativamnte diferente del ambient RNA pool
@@ -323,7 +342,7 @@ summary(e.out$FDR <= 0.001)
 set.seed(100) ## resultados reproducibles! como el p-val etc
 limit <- 100
 all.out <-
-    emptyDrops(counts(sce.pbmc), lower = limit, test.ambient = TRUE) 
+    emptyDrops(counts(sce.pbmc), lower = limit, test.ambient = TRUE)
 ## todos los droplets que tengan el limit estamos 100% seguros de que son basura
 ## el limit es fijado como a ojo pero 100 es el default
 ## con test.ambient = TRUE le dijimos que si checara los que estaban debajo del limit
